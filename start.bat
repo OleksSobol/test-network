@@ -16,12 +16,12 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [1/2] Запуск сервера LanScan на http://localhost:8000 ...
-start "" http://localhost:8000
+echo [1/2] Запуск сервера LanScan на http://localhost:8050 ...
+start "" http://localhost:8050
 
 echo [2/2] Сервер працює! Щоб зупинити, закрийте це вікно або натисніть Ctrl+C.
 echo.
-python -m uvicorn lanscan.main:app --host 0.0.0.0 --port 8000
+python -m uvicorn lanscan.main:app --host 0.0.0.0 --port 8050
 if %errorlevel% neq 0 (
     echo.
     echo [УВАГА] Перевірте наявність необхідних бібліотек:

@@ -20,6 +20,7 @@ COPY . .
 # Ensure data directory exists for SQLite persistence
 RUN mkdir -p /app/data
 
-EXPOSE 8000
+ENV PORT=8050
+EXPOSE 8050
 
-CMD ["python", "-m", "uvicorn", "lanscan.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "python -m uvicorn lanscan.main:app --host 0.0.0.0 --port ${PORT:-8050}"]
