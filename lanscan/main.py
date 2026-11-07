@@ -125,12 +125,15 @@ async def index_page(request: Request):
     primary = get_primary_interface()
     interfaces = get_network_interfaces()
     stats = get_stats()
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "primary": primary,
-        "interfaces": interfaces,
-        "stats": stats
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "primary": primary,
+            "interfaces": interfaces,
+            "stats": stats
+        }
+    )
 
 @app.get("/api/network-info")
 async def get_network_info():
