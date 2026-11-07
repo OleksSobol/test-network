@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="LanScan - Мережевий IP-Трекер",
     description="Веб-додаток для сканування та відстеження пристроїв у локальній мережі",
-    version="1.0.0",
+    version="1.0.1",
     lifespan=lifespan
 )
 
