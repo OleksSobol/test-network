@@ -128,6 +128,40 @@ def get_network_interfaces() -> List[Dict[str, Any]]:
                 except Exception:
                     continue
 
+    # If inside Docker or DEFAULT_SUBNET is provided, ensure home subnets are available
+    custom_sub = os.environ.get("DEFAULT_SUBNET")
+    if custom_sub:
+        try:
+            c_net = ipaddress.IPv4Network(custom_sub, strict=False)
+            interfaces.insert(0, {
+                "name": "Головна мережа (LAN)",
+                "ip": str(list(c_net.hosts())[0]),
+                "netmask": str(c_net.netmask),
+                "cidr": str(c_net),
+                "gateway": str(list(c_net.hosts())[0]),
+                "total_hosts": c_net.num_addresses - 2,
+                "is_primary": True
+            })
+        except Exception:
+            pass
+    elif os.path.exists("/.dockerenv") or any(i.get("ip", "").startswith("172.") for i in interfaces):
+        # Add typical home network subnets as convenient options inside Docker
+        for fallback_cidr, fallback_label in [
+            ("192.168.1.0/24", "Домашня мережа (192.168.1.0/24)"),
+            ("192.168.0.0/24", "Домашня мережа (192.168.0.0/24)"),
+            ("192.168.50.0/24", "Домашня мережа (192.168.50.0/24)")
+        ]:
+            if not any(i["cidr"] == fallback_cidr for i in interfaces):
+                interfaces.append({
+                    "name": fallback_label,
+                    "ip": fallback_cidr.replace(".0/24", ".1"),
+                    "netmask": "255.255.255.0",
+                    "cidr": fallback_cidr,
+                    "gateway": fallback_cidr.replace(".0/24", ".1"),
+                    "total_hosts": 254,
+                    "is_primary": False
+                })
+
     # Sort primary interfaces first
     interfaces.sort(key=lambda x: (not x["is_primary"], x["name"]))
     return interfaces

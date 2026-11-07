@@ -3,8 +3,8 @@ services:
     build: .
     container_name: lanscan-tracker
     restart: unless-stopped
-    # network_mode: host allows the container to scan the physical local network (LAN) directly
-    network_mode: host
+    ports:
+      - "8050:8050"
     volumes:
       - ./data:/app/data
     environment:
