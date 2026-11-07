@@ -1,0 +1,11 @@
+services:
+  lanscan:
+    build: .
+    container_name: lanscan-tracker
+    restart: unless-stopped
+    # network_mode: host allows the container to scan the physical local network (LAN) directly
+    network_mode: host
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1

@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite database local files
+data/*.db
+data/*.db-journal
+
+# Environment variables
+.env
+.venv/
+env/
+venv/
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="uk" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LanScan - Відстеження IP-адрес комп'ютерів у мережі</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-blue-600 selection:text-white">
+
+  <!-- Background decorative glows -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/2 -right-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl"></div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-800/80">
+      <div class="flex items-center gap-3">
+        <div class="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+          <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          </span>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            LanScan <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-medium">IP Tracker</span>
+          </h1>
+          <p class="text-xs text-slate-400">Моніторинг та відстеження пристроїв у локальній мережі</p>
+        </div>
+      </div>
+
+      <!-- Header actions & TOP SCAN BUTTON -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center bg-slate-900/90 border border-slate-800 rounded-lg p-1 text-xs">
+          <span class="text-slate-400 px-2 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Авто-скан:
+          </span>
+          <select id="autoScanInterval" class="bg-slate-800 text-slate-200 border-none rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500">
+            <option value="0">Вимкнено</option>
+            <option value="60">Кожні 1 хв</option>
+            <option value="300" selected>Кожні 5 хв</option>
+            <option value="900">Кожні 15 хв</option>
+          </select>
+        </div>
+
+        <!-- THE TOP SCAN BUTTON -->
+        <button id="topScanBtn" onclick="startScan()" class="scan-button px-5 py-2.5 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50 disabled:pointer-events-none">
+          <svg class="w-4 h-4 scan-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <span class="scan-label">Сканувати мережу</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 my-6">
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-xs text-slate-400 font-medium">Онлайн пристроїв</div>
+          <div class="text-xl font-bold text-white flex items-center gap-1.5" id="statOnline">
+            0
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-xs text-slate-400 font-medium">Комп'ютери / ПК</div>
+          <div class="text-xl font-bold text-white" id="statComputers">0</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-xs text-slate-400 font-medium">Всього у базі</div>
+          <div class="text-xl font-bold text-white" id="statTotal">0</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-xs text-slate-400 font-medium">Обрані</div>
+          <div class="text-xl font-bold text-white" id="statFavorites">0</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 flex items-center gap-3 col-span-2 sm:col-span-1">
+        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+          </svg>
+        </div>
+        <div class="truncate">
+          <div class="text-xs text-slate-400 font-medium">Підмережа</div>
+          <div class="text-sm font-bold font-mono text-white truncate" id="currentSubnetDisplay">
+            {{ primary.cidr if primary else '192.168.1.0/24' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Scanning Progress Card (hidden when idle) -->
+    <div id="scanProgressCard" class="hidden mb-6 bg-slate-900/90 border border-blue-500/40 rounded-2xl p-4 shadow-xl shadow-blue-900/20 transition-all">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+          </span>
+          <span class="text-sm font-semibold text-white" id="scanStatusText">Триває сканування підмережі...</span>
+        </div>
+        <div class="text-xs font-mono text-slate-400">
+          <span id="scanProgressCount">0 / 0</span> (<span id="scanPercent">0%</span>) | Знайдено: <span id="scanFoundCount" class="text-emerald-400 font-semibold">0</span>
+        </div>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+        <div id="progressBar" class="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-400 rounded-full transition-all duration-200" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Controls, Filter & Search Toolbar -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 mb-6 shadow-sm">
+      <div class="flex flex-col md:flex-row gap-3 md:items-center justify-between">
+        
+        <!-- Search bar -->
+        <div class="relative flex-1">
+          <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Шукати за назвою, IP-адресою, MAC або брендом..." 
+                 class="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+        </div>
+
+        <!-- Subnet Selector & Manual entry -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs">
+            <span class="text-slate-400">Адаптер:</span>
+            <select id="subnetSelect" class="bg-transparent text-slate-200 border-none text-xs focus:ring-0 cursor-pointer font-mono font-medium">
+              {% for iface in interfaces %}
+              <option value="{{ iface.cidr }}" {% if iface.is_primary %}selected{% endif %}>
+                {{ iface.name }} ({{ iface.cidr }})
+              </option>
+              {% endfor %}
+              <option value="custom">✏️ Інша підмережа...</option>
+            </select>
+          </div>
+
+          <div id="customSubnetBox" class="hidden">
+            <input type="text" id="customSubnetInput" placeholder="192.168.1.0/24" 
+                   class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 font-mono w-36 focus:ring-1 focus:ring-blue-500">
+          </div>
+
+          <!-- Export dropdown -->
+          <div class="relative">
+            <button id="exportBtn" onclick="toggleExportMenu()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              Експорт
+              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="exportMenu" class="hidden absolute right-0 mt-1 w-36 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-20 py-1 text-xs">
+              <a href="/api/export/csv" class="block px-3 py-2 hover:bg-slate-700 text-slate-200">Таблиця CSV</a>
+              <a href="/api/export/json" class="block px-3 py-2 hover:bg-slate-700 text-slate-200">Файл JSON</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-slate-800/80 text-xs">
+        <span class="text-slate-400 mr-1">Фільтр:</span>
+        <button onclick="setFilter('all')" class="filter-btn active px-3 py-1 rounded-lg bg-blue-600 text-white font-medium transition-colors" data-filter="all">Всі (<span id="countFilterAll">0</span>)</button>
+        <button onclick="setFilter('online')" class="filter-btn px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition-colors" data-filter="online">🟢 Онлайн (<span id="countFilterOnline">0</span>)</button>
+        <button onclick="setFilter('computers')" class="filter-btn px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition-colors" data-filter="computers">💻 Комп'ютери (<span id="countFilterComputers">0</span>)</button>
+        <button onclick="setFilter('favorites')" class="filter-btn px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition-colors" data-filter="favorites">⭐ Обрані (<span id="countFilterFavorites">0</span>)</button>
+        <button onclick="setFilter('offline')" class="filter-btn px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition-colors" data-filter="offline">⚪ Офлайн (<span id="countFilterOffline">0</span>)</button>
+      </div>
+    </div>
+
+    <!-- Device List Table -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl overflow-hidden mb-6">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 bg-slate-900 text-slate-400 text-xs uppercase tracking-wider">
+              <th class="py-3.5 px-4 w-12 text-center">Стан</th>
+              <th class="py-3.5 px-4">IP-адреса</th>
+              <th class="py-3.5 px-4">Назва пристрою / Комп'ютер</th>
+              <th class="py-3.5 px-4">Виробник / Тип</th>
+              <th class="py-3.5 px-4">MAC-адреса</th>
+              <th class="py-3.5 px-4">Останній візит</th>
+              <th class="py-3.5 px-4 text-right">Дії</th>
+            </tr>
+          </thead>
+          <tbody id="deviceTableBody" class="divide-y divide-slate-800/60 text-sm">
+            <!-- Populated via JavaScript -->
+            <tr>
+              <td colspan="7" class="py-12 text-center text-slate-500">
+                <div class="flex flex-col items-center justify-center gap-2">
+                  <svg class="w-8 h-8 text-slate-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                  <span>Завантаження пристроїв...</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- THE BOTTOM SCAN BUTTON (As explicitly requested by user) -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-gradient-to-r from-slate-900 via-slate-900 to-blue-950/40 border border-slate-800 rounded-2xl shadow-lg mb-8">
+      <div>
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <span>Оновити список комп'ютерів?</span>
+        </h3>
+        <p class="text-xs text-slate-400">Натисніть кнопку, щоб повторно просканувати мережу та знайти підключені пристрої.</p>
+      </div>
+
+      <!-- THE BOTTOM SCAN BUTTON -->
+      <button id="bottomScanBtn" onclick="startScan()" class="scan-button w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:pointer-events-none">
+        <svg class="w-4 h-4 scan-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <span class="scan-label">Повторити сканування мережі</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-slate-500 py-4 border-t border-slate-800/60">
+      <p>LanScan IP Tracker &bull; Працює на базі FastAPI & Windows SendARP &bull; Легкий і швидкий моніторинг</p>
+    </footer>
+
+  </div>
+
+  <!-- Edit Device Modal -->
+  <div id="editModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span>✏️ Редагувати пристрій</span>
+        </h3>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">IP-адреса</label>
+          <div id="modalIp" class="font-mono text-slate-200 bg-slate-800/60 px-3 py-2 rounded-lg"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">MAC-адреса</label>
+          <div id="modalMac" class="font-mono text-slate-300 bg-slate-800/60 px-3 py-2 rounded-lg"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Власна назва комп'ютера / Пристрою</label>
+          <input type="text" id="modalCustomName" placeholder="напр. Комп'ютер Івана, Мій Ноутбук, Принтер" 
+                 class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Примітки / Опис</label>
+          <textarea id="modalNotes" rows="2" placeholder="Додаткова інформація (кімната, порт, користувач)..." 
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="modalFavorite" class="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-blue-500 h-4 w-4">
+          <label for="modalFavorite" class="text-xs text-slate-300 cursor-pointer">Додати до обраних (закріпити у списку)</label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-800">
+        <button onclick="closeEditModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition-colors">
+          Скасувати
+        </button>
+        <button onclick="saveDeviceEdit()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl text-xs shadow-md shadow-blue-600/30 transition-colors">
+          Зберегти зміни
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Box -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 border border-slate-700 text-white text-xs px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2">
+    <span id="toastIcon">📋</span>
+    <span id="toastMsg">Повідомлення</span>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
